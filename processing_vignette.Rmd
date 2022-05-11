@@ -1,0 +1,100 @@
+---
+title: "Monte Carlo testing for exposure response detection using satellite tag data"
+subtitle: "Vignette for Running the Analytical Pipeline"
+author: "Joshua Hewitt, Alan E. Gelfand, Nicola J. Quick, William R. Cioffi, Brandon L. Southall, Stacy L. DeRuiter, Robert S. Schick"
+date: "`r Sys.Date()`"
+output:
+  md_document:
+    variant: markdown_github
+  html_document:
+    toc: true
+    toc_float:
+      collapsed: false
+      smooth_scroll: false
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+library(here)
+library(tidyverse)
+library(targets)
+```
+
+## Quick Start Guide
+To get up and rolling with the code just to see what happens, you need to do these 5 things:
+
+1. clone the [dive_eda repo from GitHub](https://github.com/jmhewitt/dive_eda)
+2. make sure you have all the packages installed (see below for list)
+3. In RStudio, type `targets::tar_make()` into the R console and run the entire analysis pipeline (it is structured to run using the [targets package in R](https://books.ropensci.org/targets/))
+4. Load the output with `targets::tar_load(eda_results)`. This will load a 12-element list that contains the summary output for each tag (note that you can view the summary manifest with `targets::tar_load(eda_results_manifest)`. 
+5. View the results as a summary table of the significant results, e.g. `eda_results[[7]]$df` where the 7 is the index in the `eda_results_manifest` list
+
+These packages are required to run the analysis pipeline:
+
+- `targets`
+- `future`
+- `future.batchtools`
+- `dplyr`
+- `lubridate`
+- `ggplot2`
+- `ggthemes`
+- `stringr`
+- `tidyr` 
+
+A note on run time - as of this writing, the pipeline takes about 76 minutes to run over the 8 example tags, each of which contains approximately 14 days' worth of diving data at 5-minute intervals. 
+
+Processing was performed and timed using a 2019 MacBook Pro with a 2.3GHz 8-Core Intel Core i9 with 64GB of RAM. This can be sped up with use of multiple cores; e.g. `targets::tar_make_future(workers = 4)` see `targets::tar_make_future()` for guidance. See the end of the document for full session info, including the R version, and R packages version.
+
+Assuming you are in the R project, and have the `targets` library loaded, in Rcode, you would source this code to run the analysis:
+
+```{r eval=FALSE}
+targets::tar_make()
+targets::tar_load(eda_results) 
+eda_results
+```
+
+And that summary table of the conditional tests for an example tag (e.g., `ZcTag095_DUML`) looks as follows:
+
+```{r echo=FALSE}
+tar_load(eda_results) 
+knitr::kable(eda_results[[7]]$df, caption = "Table 1. Results from one example whale (ZcTag095_DUML, conditional) indicates sigificance for each test-statistic across the 9 temporal windows. Results are significant at the 0.1 level if printed in table. The conditional tests represent pre-post pairs, where the 'pre' window must match the context of the diving state of the animal at the time of the exposure. See Section 2.2 of the manuscript for details. ")
+```
+
+The `eda_results_manifest` allows you to glimpse the different animals under the different conditions:
+
+- To get the results for unconditional tests for `ZcTag069`, type `eda_results[[2]]$df` 
+- To get conditional results for `ZcTag097_DUML`, type `eda_results[[11]]$df`
+- The full manifest for the example tags is:
+
+```{r}
+targets::tar_load(eda_results_manifest)
+eda_results_manifest
+```
+
+
+## Data
+The code base is set up to run using the  [targets](https://books.ropensci.org/targets/) package. We describe the structure of the targets-based workflow, as well as the analytical R code. We assume you have cloned the [dive_eda repo](https://github.com/jmhewitt/dive_eda) and opened up the project in R. We wrote this code to work with series data that arise from a [SPLASH-10 tag from WildLife Computers](https://wildlifecomputers.com/our-tags/splash-archiving-tags/splash10/). In our case, the tags were programmed to record the depth every 5 minutes for approximately 2 weeks: 
+
+```{r depth_data}
+dive_dat <- read_csv(here::here('data/sattag', 'ZcTag084_DUML_series_20200108.csv'))
+
+dive_dat %>% 
+  select(DeployID, Day, Time, Depth, DRange)
+```
+
+Thus, we are concerned with the time series of values in the `Depth` column, which as described in the User Manual for the tags, is the center of a depth bin (in meters); `DRange` is the +/- of the error (also in meters). In the manuscript, we run the code over a series of animals, e.g. 8 tags; the code is structured to run over all of these tags.
+
+
+## References
+Quick, N. J., Cioffi, W. R., Shearer, J., & Read, A. J. (2019). Mind the gap—Optimizing satellite tag settings for time series analysis of foraging dives in Cuvier’s beaked whales (*Ziphius cavirostris*). Animal Biotelemetry, 7(1), 5. https://doi.org/10.1186/s40317-019-0167-5
+
+Shearer, J. M., Quick, N. J., Cioffi, W. R., Baird, R. W., Webster, D. L., Foley, H. J., Swaim, Z. T., Waples, D. M., Bell, J. T., & Read, A. J. (2019). Diving behaviour of Cuvier’s beaked whales (*Ziphius cavirostris*) off Cape Hatteras, North Carolina. R Soc Open Sci, 6(2), 181728. https://doi.org/10.1098/rsos.181728
+
+## R Environment
+The current R environment on which this was run is here:
+
+```{r}
+sessionInfo()
+```
+

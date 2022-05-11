@@ -1,0 +1,14 @@
+---
+title: "Monte Carlo Results"
+ouput: html_document
+---
+
+The goal of this R Markdown report is to display the results of the monte carlo tests
+
+
+```{r}
+library(targets)
+tar_load(eda_results) 
+knitr::kable(eda_results[[7]]$df, caption = "Table 1. Results from one example whale (ZcTag095, conditional) indicates sigificance for each test-statistic across the 9 temporal windows. Results are significant at the 0.1 level if printed in table. The conditional tests represent pre-post pairs, where the 'pre' window must match the context of the diving state of the animal at the time of the exposure. See Section 2.2 of the manuscript for details. ")
+```
+
