@@ -656,6 +656,8 @@ plot_targets = list(
         ) +
         coord_equal()
       
+      browser()
+      
       #
       # save plots
       #

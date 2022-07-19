@@ -49,7 +49,7 @@ table_targets = list(
         )
       )
       
-      write_clip(content = x, allow_non_interactive = TRUE)
+      write_clip(x)
       
       x
     }

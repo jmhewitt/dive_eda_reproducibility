@@ -14,7 +14,7 @@ if(system('command -v sbatch') == 0) {
 # set packages to load
 tar_option_set(
   packages = c('dplyr', 'lubridate', 'ggplot2', 'ggthemes', 'stringr', 'tidyr',
-               'xtable', 'clipr', 'viridis'),
+               'xtable', 'clipr', 'viridis', 'forcats'),
   deployment = 'main'
 )
 
@@ -29,8 +29,9 @@ c(
   window_targets,
   pre_post_targets,
   summary_targets,
-  # eda_targets,  # currently only makes ts_plots, which is not needed
+  eda_targets,
   tar_render(report_step, "results.Rmd"),
   plot_targets,
-  table_targets
+  table_targets,
+  sim_plot_targets
 )

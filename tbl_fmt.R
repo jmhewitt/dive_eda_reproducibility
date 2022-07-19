@@ -7,19 +7,27 @@ targets::tar_load(eda_results_manifest)
 
 # 88, 89, 93, 95, 96, 97
 
-tag_id = 'ZcTag087'
+fdr_table = TRUE
+
+tag_id = 'ZcTag093'
 
 ind = eda_results_manifest %>% 
   filter(tag == tag_id, conditional == TRUE) %>% 
   select(index) %>% 
   as.numeric()
 
+# select table to format
+if(fdr_table) {
+  df = eda_results[[ind]]$df.bivariate_fdr
+} else {
+  df = eda_results[[ind]]$df.bivariate
+}
+
 # print (+) and (-) using latex math formatting
-df = apply(eda_results[[ind]]$df.bivariate, 2, function(col) {
+df = apply(df, 2, function(col) {
   txt = gsub(pattern = '\\(', replacement = '$(', col)
   txt = gsub(pattern = '\\)', replacement = ')$', txt)
   txt = gsub(pattern = '_', replacement = ' ', txt)
-  txt
 })
 
 # update principal column name
@@ -57,20 +65,43 @@ df[seq(from = 2, to = nrow(df), by = 2),-1] = apply(
   paste('\\emph{\\color{gray}', col, '}')
 })
 
+cutoff_fmt = eda_results[[ind]]$cutoffs$df.bivariate %>% 
+  filter(tag == tag_id) %>% 
+  select(cutoff) %>% 
+  as.numeric() %>% 
+  format(scientific = TRUE, digits = 2) %>% 
+  toupper()
+
+if(fdr_table) {
+  caption = paste(
+    eda_results[[ind]]$tag_id, ', tail probabilities conditional on dive ',
+    'state at exposure without order sensitivity $t_k(w)$ (black), and ',
+    'with order sensitivity $t_k^D(w)$ (grey, emphasized). Probabilities ', 
+    'are included if smaller than the tag\'s FDR threshold of ', cutoff_fmt, 
+    ', and are annotated with $(-)$ or ',
+    '$(+)$ to indicate they are for the left or right tail, respectively.',
+    '\\linebreak',
+    sep = ''
+  )
+} else {
+  caption = paste(
+    eda_results[[ind]]$tag_id, ', tail probabilities conditional on dive ',
+    'state at exposure without order sensitivity $t_k(w)$ (black), and ',
+    'with order sensitivity $t_k^D(w)$ (grey, emphasized). Probabilities ', 
+    'are excluded if greater than 0.1, and are annotated with $(-)$ or',
+    '$(+)$ to indicate they are for the left or right tail, respectively.',
+    '\\linebreak',
+    sep = ''
+  )
+}
+
+
 
 x = print.xtable(
   xtable(
     x = df, 
     align = 'rl|l|ll|llllll', 
-    caption = paste(
-      eda_results[[ind]]$tag_id, ', tail probabilities conditional on dive ',
-      'state at exposure without order sensitivity $t_k(w)$ (black), and ',
-      'with order sensitivity $t_k^D(w)$ (grey, emphasized). Probabilities ', 
-      'are excluded is greater than 0.1, and are annotated with $(-)$ or ',
-      '$(+)$ to indicate they are for the left or right tail, respectively.',
-      '\\linebreak',
-      sep = ''
-    )
+    caption = caption
   ), 
   booktabs = TRUE, 
   sanitize.text.function = identity, 
@@ -102,7 +133,3 @@ x = stringr::str_replace(
 )
 
 clipr::write_clip(x)
-
-
-\label{table:animal_counts}
-\label{table:zc93_results}

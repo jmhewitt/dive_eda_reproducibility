@@ -3,8 +3,8 @@
 To get up and rolling with the code just to see what happens, you need
 to do these 5 things:
 
-1.  clone the [dive_eda_reproducibility repo from
-    GitHub](https://github.com/jmhewitt/dive_eda_reproducibility)
+1.  clone the [dive_eda repo from
+    GitHub](https://github.com/jmhewitt/dive_eda)
 2.  make sure you have all the packages installed (see below for list)
 3.  In RStudio, type `targets::tar_make()` into the R console and run
     the entire analysis pipeline (it is structured to run using the
@@ -19,25 +19,18 @@ to do these 5 things:
 
 These packages are required to run the analysis pipeline:
 
-- `targets`
-- `tarchetypes`
-- `future`
-- `future.batchtools`
-- `dplyr`
-- `lubridate`
-- `ggplot2`
-- `ggthemes`
-- `stringr`
-- `tidyr`
-- `xtable`
-- `clipr`
-- `viridis`
-- `here`
-- `knitr`
-- `MASS`
+-   `targets`
+-   `future`
+-   `future.batchtools`
+-   `dplyr`
+-   `lubridate`
+-   `ggplot2`
+-   `ggthemes`
+-   `stringr`
+-   `tidyr`
 
 A note on run time - as of this writing, the pipeline takes about 76
-minutes to run over the 9 example tags, each of which contains
+minutes to run over the 8 example tags, each of which contains
 approximately 14 days’ worth of diving data at 5-minute intervals.
 
 Processing was performed and timed using a 2019 MacBook Pro with a
@@ -47,7 +40,7 @@ use of multiple cores; e.g. `targets::tar_make_future(workers = 4)` see
 for full session info, including the R version, and R packages version.
 
 Assuming you are in the R project, and have the `targets` library
-loaded, in `R` code, you would source this code to run the analysis:
+loaded, in Rcode, you would source this code to run the analysis:
 
 ``` r
 targets::tar_make()
@@ -83,31 +76,72 @@ the exposure. See Section 2.2 of the manuscript for details.
 The `eda_results_manifest` allows you to glimpse the different animals
 under the different conditions:
 
--   To get the results for unconditional tests for `ZcTag083`, type
+-   To get the results for unconditional tests for `ZcTag069`, type
     `eda_results[[2]]$df`
--   To get conditional results for `ZcTag097`, type
-    `eda_results[[17]]$df`
--   The full manifest for the example tags is viewed by:
+-   To get conditional results for `ZcTag097_DUML`, type
+    `eda_results[[11]]$df`
+-   The full manifest for the example tags is:
 
 ``` r
 targets::tar_load(eda_results_manifest)
 eda_results_manifest
 ```
 
+    ##         tag conditional index
+    ## 1  ZcTag069        TRUE     1
+    ## 2  ZcTag069       FALSE     2
+    ## 3  ZcTag085        TRUE     3
+    ## 4  ZcTag085       FALSE     4
+    ## 5  ZcTag093        TRUE     5
+    ## 6  ZcTag093       FALSE     6
+    ## 7  ZcTag095        TRUE     7
+    ## 8  ZcTag095       FALSE     8
+    ## 9  ZcTag096        TRUE     9
+    ## 10 ZcTag096       FALSE    10
+    ## 11 ZcTag097        TRUE    11
+    ## 12 ZcTag097       FALSE    12
 
 ## Data
 
 The code base is set up to run using the
 [targets](https://books.ropensci.org/targets/) package. We describe the
 structure of the targets-based workflow, as well as the analytical R
-code. We assume you have cloned the [dive_eda_reproducibility
-repo](https://github.com/jmhewitt/dive_eda_reproducibility) and opened up the project in
+code. We assume you have cloned the [dive_eda
+repo](https://github.com/jmhewitt/dive_eda) and opened up the project in
 R. We wrote this code to work with series data that arise from a
 [SPLASH-10 tag from WildLife
 Computers](https://wildlifecomputers.com/our-tags/splash-archiving-tags/splash10/).
 In our case, the tags were programmed to record the depth every 5
-minutes for approximately 2 weeks.
+minutes for approximately 2 weeks:
 
+``` r
+dive_dat <- read_csv(here::here('data/sattag', 'ZcTag084_DUML_series_20200108.csv'))
+
+dive_dat %>% 
+  select(DeployID, Day, Time, Depth, DRange)
+```
+
+    ## # A tibble: 3,878 × 5
+    ##    DeployID Day         Time   Depth DRange
+    ##    <chr>    <chr>       <time> <dbl>  <dbl>
+    ##  1 ZcTag084 23-May-2019 12:50    267   27.5
+    ##  2 ZcTag084 23-May-2019 12:55    267   27.5
+    ##  3 ZcTag084 23-May-2019 13:00    170   26.5
+    ##  4 ZcTag084 23-May-2019 13:05     12   12.5
+    ##  5 ZcTag084 23-May-2019 13:10    534   54.5
+    ##  6 ZcTag084 23-May-2019 13:15   1165  110. 
+    ##  7 ZcTag084 23-May-2019 13:20   1360  112. 
+    ##  8 ZcTag084 23-May-2019 13:25   1360  112. 
+    ##  9 ZcTag084 23-May-2019 13:30   1360  112. 
+    ## 10 ZcTag084 23-May-2019 13:35   1360  112. 
+    ## # … with 3,868 more rows
+
+Thus, we are concerned with the time series of values in the `Depth`
+column, which as described in the User Manual for the tags, is the
+center of a depth bin (in meters); `DRange` is the +/- of the error
+(also in meters). In the manuscript, we run the code over a series of
+animals, e.g. 8 tags; the code is structured to run over all of these
+tags.
 
 ## References
 

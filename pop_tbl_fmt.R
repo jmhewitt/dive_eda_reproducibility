@@ -9,7 +9,7 @@ targets::tar_load(eda_results_manifest)
 # work toward total number of small tail probs. per metric
 aggregate_results = do.call(rbind, lapply(eda_results, function(x) {
   if(x$conditional) {
-    x$df.bivariate.raw
+    x$df.bivariate.raw %>% left_join(x$cutoffs$df.bivariate, by = 'tag')
   } else {
     NULL
   }
@@ -56,9 +56,18 @@ aggregate_results = aggregate_results %>%
     sequential = grepl('timing', stat)
   )
 
+results_by_animal = aggregate_results %>% 
+  mutate(signif = p < cutoff) %>% 
+  group_by(tag) %>%
+  summarise(
+    num_signif_tests = sum(signif),
+    cutoff = unique(cutoff)
+  )
+
 aggregate_results = aggregate_results %>% 
+  mutate(signif = p < cutoff) %>%
   group_by(stat, description, sequential) %>% 
-  summarise(num_signif_animals = sum(p < .1))
+  summarise(num_signif_animals = sum(signif))
 
 
 df = aggregate_results %>% 
@@ -129,8 +138,9 @@ x = print.xtable(
     x = df, 
     align = 'rl|l|ll|llllll', 
     caption = paste(
-      'Number of animals with either left or right tail probabilities less ',
-      'than 0.1, conditional on dive state at exposure without order ',
+      'Number of animals with either left or right tail probabilities smaller ',
+      'than each tag\'s FDR threshold, conditional on dive state at exposure ',
+      'without order ',
       'sensitivity $t_k(w)$ (black), and with order sensitivity $t_k^D(w)$ ', 
       '(grey, emphasized).\\linebreak',
       sep = ''
